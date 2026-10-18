@@ -61,7 +61,6 @@ def _inner(params_path: str) -> None:
 
     entities = stage.GetPrimAtPath("/World/Entities")
     for prim in entities.GetChildren():
-        xf = UsdGeom.Xformable(prim)
         translate = prim.GetAttribute("xformOp:translate")
         vis = UsdGeom.Imageable(prim).GetVisibilityAttr()
         geom = prim.GetChild("geom")
@@ -85,9 +84,6 @@ def _inner(params_path: str) -> None:
             if c:
                 bsdf.inputs["Base Color"].default_value = (*tuple(c[0]), 1.0)
             bsdf.inputs["Base Color"].keyframe_insert("default_value", frame=frame)
-        for fc in (obj.animation_data.action.fcurves if hasattr(obj.animation_data.action, "fcurves") else []):
-            for k in fc.keyframe_points:
-                k.interpolation = "CONSTANT"
 
     # camera aimed at the middle of the ground, a sun, and a transparent film
     bpy.ops.object.empty_add(location=(sum(x for x, _, _ in pts) / len(pts), sum(y for _, y, _ in pts) / len(pts), 0))
@@ -128,10 +124,34 @@ def _outer(args) -> None:
 
     frames = Path(tempfile.mkdtemp(prefix="replay-"))
     params = frames / "params.json"
-    params.write_text(json.dumps({"stage": str(Path(args.stage).resolve()), "frames": str(frames),
-                                  "size": args.size, "samples": args.samples, "limit": args.limit}))
-    subprocess.run([args.blender, "-b", "--python-exit-code", "1", "--threads", str(args.threads), "-P", __file__, "--",
-                    "--inner", str(params)], check=True, stdout=subprocess.DEVNULL)
+    params.write_text(
+        json.dumps(
+            {
+                "stage": str(Path(args.stage).resolve()),
+                "frames": str(frames),
+                "size": args.size,
+                "samples": args.samples,
+                "limit": args.limit,
+            }
+        )
+    )
+    subprocess.run(
+        [
+            args.blender,
+            "-b",
+            "--python-exit-code",
+            "1",
+            "--threads",
+            str(args.threads),
+            "-P",
+            __file__,
+            "--",
+            "--inner",
+            str(params),
+        ],
+        check=True,
+        stdout=subprocess.DEVNULL,
+    )
 
     stage = Usd.Stage.Open(args.stage)
     world = stage.GetPrimAtPath("/World")
