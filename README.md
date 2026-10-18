@@ -4,6 +4,13 @@ A flight recorder for simulations: call `record(tick, entities, extras, events)`
 get a time-sampled [OpenUSD](https://openusd.org) stage you can scrub in usdview, Blender, or any
 USD tool.
 
+![examples/random_walkers.py replayed from its recording: walkers wander, fade from green to red, die and are born](docs/images/replay.gif)
+
+*`examples/random_walkers.py` (300 ticks, `--chunk-size 100`), flattened with `usd-recorder flatten`
+and replayed from the recorded time samples (position, visibility, colour, the `population` extra
+and the `log` event channel) in headless Blender. Rendered by
+[`docs/render_replay.py`](docs/render_replay.py).*
+
 It packages the recording patterns proven in
 [viron-usd](https://github.com/Preponderous-Software/viron-usd) (time-sampled entities, chunked
 layers stitched with value clips, `flatten`) and
