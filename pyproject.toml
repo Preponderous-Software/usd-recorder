@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=77.0.3"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "usd-recorder"
+description = "Record a simulation tick by tick as a time-sampled OpenUSD stage: entity lifecycle, typed extras, event channels, chunked value clips, flatten, atomic live writes."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Daniel McCoy Stephenson" }]
+requires-python = ">=3.10"
+dependencies = [
+    # Pinned exactly: the value-clip behaviour the tests assert is usd-core's (ARCHITECTURE.md § Dependencies).
+    "usd-core==26.8",
+]
+dynamic = ["version"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Multimedia :: Graphics :: 3D Modeling",
+    "Typing :: Typed",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff==0.17.1"]
+
+[project.scripts]
+usd-recorder = "usd_recorder.cli:main"
+
+[project.urls]
+Repository = "https://github.com/Preponderous-Software/usd-recorder"
+
+[tool.setuptools.dynamic]
+version = { attr = "usd_recorder.__version__" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+usd_recorder = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
