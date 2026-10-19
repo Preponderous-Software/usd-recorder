@@ -6,7 +6,7 @@ src/usd_recorder/
   track.py      Track: sparse sampling with hold keys for one attribute
   values.py     typed values: value_type, SDF_TYPES, colours, property names
   clips.py      stitch (atomic StitchClips + hooks), manifest defaults, flatten, has_clips
-  atomic.py     atomic_export / atomic_write_bytes (temp file + os.replace)
+  atomic.py     atomic_export / atomic_write_bytes / atomic_write_text (temp file + os.replace)
   inspect.py    inspect_stage: a plain-data summary of a recording
   replay.py     the usd-replay/1 contract: ReplayWriter, read_replay, validate_replay, convert
   cli.py        usd-recorder flatten | inspect | replay {validate,info,convert}
@@ -196,6 +196,8 @@ the Python writer's sample for sample.
 - `test_roundtrip.py`: randomized record → read-back over six seeds × five chunk sizes (none,
   1, 4, 13, 1000), text and binary, composed and flattened; plus chunked vs unchunked equality.
 - `test_clip_traps.py`: both traps, with raw USD and through the recorder.
+- `test_clips.py`: the clip building blocks without a `Recorder`: chunk and flat names, `stitch`
+  with all three hooks (and nothing published when a hook fails), `set_manifest_defaults`.
 - `test_recorder.py`, `test_track.py`, `test_values.py`: behaviour and validation.
 - `test_live.py`: follower thread, atomic failure modes, staging cleanup, relocation.
 - `test_cli.py`, `test_example.py`, `test_cpp_writer.py`.
