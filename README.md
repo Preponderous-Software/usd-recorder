@@ -37,13 +37,61 @@ to find.
 - **C++ writer.** A dependency-free header, `cpp/include/usd_recorder/usda_writer.hpp`, writes the
   same layout from C++ simulations (unchunked `.usda`).
 
+## Replays: the `usd-replay/1` contract
+
+To *share* a run rather than scrub it locally, write a **replay**: one compact layer in a small
+fixed layout ([docs/REPLAY.md](docs/REPLAY.md)) that any player can read without knowing the
+sim. Each kind of entity is one `Points` prim with time-sampled `ids`/`points` (and optional
+per-point colours and widths), colour grids are time-sampled `Mesh` fields, and every sample
+carries the sim's **state hash**, so anyone can re-run the seed and check the history is real.
+
+![examples/grazers_replay.py played in usd-web's replay player: grazers spread over a grass field, foxes hunt them, the grass is eaten and regrows](docs/images/replay-grazers.gif)
+
+*`examples/grazers_replay.py` (800 ticks, a sample every 4): a 2.6 MB `.usdc` replay, converted
+with `usd-web replay` to a 118 KB web replay and played in
+[usd-web](https://github.com/Preponderous-Software/usd-web)'s player. The panel shows the state
+hash of the tick on screen.*
+
+```python
+from usd_recorder.replay import ReplayWriter
+
+with ReplayWriter(
+    "run.usdc",
+    sim="mysim",
+    sim_version="1.2.0",
+    seed=7,
+    tick_rate=10,
+    state_hash_algorithm="mysim fingerprint (FNV-1a 64)",
+) as w:
+    w.entity_set("prey", label="Prey", color="#5a9e4b", width=1.0)
+    w.field("food", label="Food", cols=32, rows=32, cell_size=4.0)
+    for tick in range(0, 3000, 10):
+        sim.run_until(tick)
+        w.sample(
+            tick,
+            state_hash=f"{sim.hash():016x}",
+            entities={"prey": {"ids": sim.ids, "points": sim.xyz}},
+            fields={"food": sim.food_rgb},
+            stats={"population": len(sim.ids)},
+        )
+```
+
+```bash
+usd-recorder replay validate run.usdc          # every rule of the contract, with prim paths
+usd-recorder replay info run.usdc              # metadata, sample ticks, sets, fields
+usd-recorder replay convert run.usda run.usdc  # e.g. after the C++ writer
+```
+
+C++ sims use the dependency-free `cpp/include/usd_recorder/replay_writer.hpp` (writes `.usda`,
+same samples as the Python writer, checked by `tests/test_cpp_replay.py`).
+
 ## Install
 
 ```bash
-pip install "usd-recorder @ git+https://github.com/Preponderous-Software/usd-recorder@v0.1.0"
+pip install "usd-recorder @ git+https://github.com/Preponderous-Software/usd-recorder@v0.2.0"
 ```
 
-Python 3.10+; depends only on `usd-core` (pinned to 26.8). Not on PyPI yet: pin the git tag.
+Python 3.10+; depends on `usd-core` (pinned to 26.8) and numpy. Not on PyPI yet: pin the git tag.
 
 ## Quick start
 
@@ -126,7 +174,7 @@ uv venv -p 3.12 && uv pip install -e ".[dev]"
 ```
 
 Docs: [CONCEPT.md](CONCEPT.md) (what and why), [ARCHITECTURE.md](ARCHITECTURE.md) (how, and the
-traps).
+traps), [docs/REPLAY.md](docs/REPLAY.md) (the replay contract).
 
 ## License
 

@@ -13,6 +13,8 @@ requires-python = ">=3.10"
 dependencies = [
     # Pinned exactly: the value-clip behaviour the tests assert is usd-core's (ARCHITECTURE.md § Dependencies).
     "usd-core==26.8",
+    # The replay contract (usd_recorder.replay) moves arrays through numpy.
+    "numpy>=1.26",
 ]
 dynamic = ["version"]
 classifiers = [

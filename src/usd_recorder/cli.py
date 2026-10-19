@@ -1,4 +1,4 @@
-"""Command-line entry point: ``usd-recorder flatten`` and ``usd-recorder inspect``."""
+"""Command-line entry point: ``usd-recorder flatten | inspect | replay {validate,info,convert}``."""
 
 from __future__ import annotations
 
@@ -34,6 +34,20 @@ def build_parser() -> argparse.ArgumentParser:
     ins = sub.add_parser("inspect", help="summarise a recording", description="Summarise a recorded stage.")
     ins.add_argument("run", metavar="RUN", help="root layer of the recording")
     ins.add_argument("--json", action="store_true", help="print the summary as JSON")
+
+    rep = sub.add_parser(
+        "replay",
+        help="validate, summarise or convert a usd-replay/1 replay",
+        description="Work with replays in the usd-replay/1 contract (docs/REPLAY.md).",
+    )
+    rsub = rep.add_subparsers(dest="replay_command", metavar="ACTION", required=True)
+    val = rsub.add_parser("validate", help="check a replay against the contract (exit 1 on problems)")
+    val.add_argument("replay", metavar="REPLAY")
+    inf = rsub.add_parser("info", help="print a replay's metadata, sample ticks, sets and fields as JSON")
+    inf.add_argument("replay", metavar="REPLAY")
+    con = rsub.add_parser("convert", help="re-export a replay as .usda or .usdc (by OUT's extension)")
+    con.add_argument("replay", metavar="REPLAY")
+    con.add_argument("out", metavar="OUT")
     return parser
 
 
@@ -44,6 +58,8 @@ def main(argv: list[str] | None = None) -> int:
         parser.print_help()
         return 2
     try:
+        if args.command == "replay":
+            return _replay(args)
         if args.command == "flatten":
             out = flatten(args.run, args.out, binary=args.binary)
             print(out)
@@ -53,6 +69,27 @@ def main(argv: list[str] | None = None) -> int:
     except (OSError, ValueError) as exc:
         print(f"usd-recorder: error: {exc}", file=sys.stderr)
         return 1
+    return 0
+
+
+def _replay(args: argparse.Namespace) -> int:
+    from .replay import convert, replay_info, validate_replay
+
+    if args.replay_command == "validate":
+        problems = validate_replay(args.replay)
+        if problems:
+            print(f"{args.replay}: {len(problems)} problem(s)")
+            for problem in problems:
+                print(f"  {problem}")
+            return 1
+        print(f"{args.replay}: conforms to usd-replay/1")
+    elif args.replay_command == "info":
+        print(json.dumps(replay_info(args.replay), indent=2))
+    else:
+        problems = validate_replay(args.replay)
+        if problems:
+            raise ValueError(f"{args.replay} is not a valid replay: {problems[0]}")
+        print(convert(args.replay, args.out))
     return 0
 
 

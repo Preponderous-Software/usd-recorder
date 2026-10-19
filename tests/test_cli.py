@@ -53,4 +53,4 @@ def test_inspect(tmp_path, capsys):
 def test_no_command_and_module_entry_point():
     assert main([]) == 2
     proc = subprocess.run([sys.executable, "-m", "usd_recorder.cli", "--version"], capture_output=True, text=True)
-    assert proc.returncode == 0 and "0.1.0" in proc.stdout
+    assert proc.returncode == 0 and "0.2.0" in proc.stdout

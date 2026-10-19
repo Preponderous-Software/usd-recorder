@@ -1,6 +1,6 @@
 """usd-recorder: record a simulation tick by tick as a time-sampled OpenUSD stage."""
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 from .atomic import atomic_export, atomic_write_bytes, atomic_write_text  # noqa: E402
 from .clips import (  # noqa: E402

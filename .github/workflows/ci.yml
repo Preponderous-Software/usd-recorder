@@ -59,3 +59,9 @@ jobs:
             cpp/tests/scenario.cpp -o scenario
           ./scenario run.usda
           head -20 run.usda
+      - name: Compile the replay scenario with warnings as errors
+        run: |
+          ${{ matrix.cxx }} -std=c++17 -Wall -Wextra -Werror -pedantic -I cpp/include \
+            cpp/tests/replay_scenario.cpp -o replay_scenario
+          ./replay_scenario replay.usda
+          head -30 replay.usda
