@@ -8,8 +8,10 @@ src/usd_recorder/
   clips.py      stitch (atomic StitchClips + hooks), manifest defaults, flatten, has_clips
   atomic.py     atomic_export / atomic_write_bytes (temp file + os.replace)
   inspect.py    inspect_stage: a plain-data summary of a recording
-  cli.py        usd-recorder flatten | inspect
-cpp/include/usd_recorder/usda_writer.hpp   header-only C++17 .usda writer
+  replay.py     the usd-replay/1 contract: ReplayWriter, read_replay, validate_replay, convert
+  cli.py        usd-recorder flatten | inspect | replay {validate,info,convert}
+cpp/include/usd_recorder/usda_writer.hpp    header-only C++17 .usda writer (Recorder layout)
+cpp/include/usd_recorder/replay_writer.hpp  header-only C++17 .usda writer (replay contract)
 ```
 
 ## Time
@@ -172,6 +174,23 @@ options are Python-only; a C++ run that needs chunks can be re-chunked in Python
 the traps above were found on that version. Bumping it means re-running the trap tests, which is
 what they are for.
 
+## Replays
+
+`replay.py` is a second, deliberately narrower layout for *sharing* a run: the
+[`usd-replay/1` contract](docs/REPLAY.md). Where a `Recorder` stage has one Xform per entity and
+sparse per-attribute samples (good for scrubbing a few hundred agents in usdview), a replay keeps
+each kind of entity in one `UsdGeomPoints` prim sampled at every sample tick, so thousands of
+entities over thousands of samples stay one compact `.usdc` that a player decodes without
+composing anything. `ReplayWriter` builds it on an in-memory stage and exports it atomically on
+`close()`; it validates a whole sample before writing any of it, and does not resample a field
+whose colours did not change. `validate_replay` checks every rule of the contract and returns one
+message per problem; `read_replay` loads a replay into numpy arrays (validating first).
+
+Colours are converted from sRGB to linear on the way in (`srgb_to_linear`) and back with
+`linear_to_srgb8`; the conversion round-trips every byte. The C++ `replay_writer.hpp` uses the
+same formula (in double, then float), and `tests/test_cpp_replay.py` checks that its replay equals
+the Python writer's sample for sample.
+
 ## Testing
 
 - `test_roundtrip.py`: randomized record → read-back over six seeds × five chunk sizes (none,
@@ -180,3 +199,6 @@ what they are for.
 - `test_recorder.py`, `test_track.py`, `test_values.py`: behaviour and validation.
 - `test_live.py`: follower thread, atomic failure modes, staging cleanup, relocation.
 - `test_cli.py`, `test_example.py`, `test_cpp_writer.py`.
+- `test_replay.py`: the replay writer and reader, colour round trip, the CLI, and the validator
+  against a good replay broken one rule at a time (25 ways).
+- `test_cpp_replay.py`: the C++ replay writer's output validates and equals the Python writer's.

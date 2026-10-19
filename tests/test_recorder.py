@@ -32,7 +32,7 @@ def test_stage_metadata(tmp_path):
     assert (stage.GetStartTimeCode(), stage.GetEndTimeCode()) == (3, 9)
     assert stage.GetDefaultPrim().GetPath() == "/World"
     data = stage.GetRootLayer().customLayerData
-    assert data["sim:seed"] == 7 and data["usdRecorder:version"] == "0.1.0"
+    assert data["sim:seed"] == 7 and data["usdRecorder:version"] == "0.2.0"
 
 
 def test_entity_appears_disappears_and_returns(tmp_path):
