@@ -141,10 +141,12 @@ metadata. See [ARCHITECTURE.md](ARCHITECTURE.md).
 ### Building blocks
 
 The pieces the `Recorder` is made of are public, for consumers with their own stage layout
-(viron-usd uses them this way): `Track` (sparse sampler with hold keys), `value_type` and
-`SDF_TYPES` (typed values), `stitch` (atomic `StitchClips` with topology/manifest/root hooks),
-`default_invisible` and `set_manifest_defaults` (manifest defaults), `flatten`, `has_clips`,
-`atomic_export` and `atomic_write_bytes`.
+(viron-usd uses them this way): `Track` (sparse sampler with hold keys), `value_type`,
+`SDF_TYPES`, `TypeChangeError` and `normalize_color` (typed values), `stitch` (atomic
+`StitchClips` with topology/manifest/root hooks), `default_invisible` and `set_manifest_defaults`
+(manifest defaults), `chunk_name` and `default_entity_name` (naming), `flatten`,
+`default_flat_path`, `has_clips`, `inspect_stage`, and `atomic_export`, `atomic_write_bytes` and
+`atomic_write_text`.
 
 ### C++
 

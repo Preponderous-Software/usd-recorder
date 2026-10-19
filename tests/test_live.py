@@ -8,7 +8,7 @@ import threading
 import pytest
 from pxr import Sdf, Usd
 
-from usd_recorder import Recorder, atomic_export, atomic_write_bytes
+from usd_recorder import Recorder, atomic_export, atomic_write_bytes, atomic_write_text
 from usd_recorder import atomic as atomic_mod
 
 
@@ -95,6 +95,17 @@ def test_atomic_write_bytes_uses_replace(tmp_path, monkeypatch):
     atomic_write_bytes(tmp_path / "x.bin", b"abc")
     assert (tmp_path / "x.bin").read_bytes() == b"abc"
     assert len(calls) == 1 and str(calls[0][1]).endswith("x.bin")
+
+
+def test_atomic_write_text_reloads_a_layer_this_process_has_open(tmp_path):
+    path = tmp_path / "r.usda"
+    layer = Sdf.Layer.CreateNew(str(path))
+    layer.documentation = "old"
+    layer.Save()
+    atomic_write_text(path, '#usda 1.0\n(\n    doc = "new é"\n)\n')
+    assert path.read_text(encoding="utf-8").count("new é") == 1
+    assert layer.documentation == "new é"
+    assert leftovers(tmp_path) == []
 
 
 def test_stitch_leaves_no_staging_files_and_is_relocatable(tmp_path):
