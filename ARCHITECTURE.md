@@ -172,7 +172,8 @@ options are Python-only; a C++ run that needs chunks can be re-chunked in Python
 
 `usd-core` is pinned exactly (26.8): the value-clip behaviour the tests assert is usd-core's, and
 the traps above were found on that version. Bumping it means re-running the trap tests, which is
-what they are for.
+what they are for. `numpy` (`>=1.26`) is a dependency of the replay contract only: `replay.py`
+moves arrays through it and `read_replay` returns them.
 
 ## Replays
 
