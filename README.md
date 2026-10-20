@@ -119,8 +119,10 @@ with Recorder("out/run.usda", time_codes_per_second=24, chunk_size=500) as rec:
 
 ```bash
 usd-recorder inspect out/run.usda           # time range, clips, sample counts, metadata
+usd-recorder inspect out/run.usda --json    # the same summary as JSON
 usd-recorder flatten out/run.usda           # -> out/run_flat.usda, every clip baked in
 usd-recorder flatten out/run.usda --binary  # -> out/run_flat.usdc
+usd-recorder flatten out/run.usda -o flat.usda  # choose the output layer
 ```
 
 A runnable example: `python examples/random_walkers.py out/run.usda --chunk-size 100`.
