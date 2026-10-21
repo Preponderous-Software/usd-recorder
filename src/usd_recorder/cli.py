@@ -46,7 +46,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="check a replay against the contract (exit 1 on problems)",
         description=(
             "Check REPLAY against every rule of usd-replay/1 and print one line per problem, "
-            "with its prim path; exit 1 if there is any."
+            "prefixed with where it is (a prim path, the layer or its metadata); exit 1 if there is any."
         ),
     )
     val.add_argument("replay", metavar="REPLAY", help="replay layer (.usda or .usdc)")
