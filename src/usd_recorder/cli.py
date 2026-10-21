@@ -41,13 +41,28 @@ def build_parser() -> argparse.ArgumentParser:
         description="Work with replays in the usd-replay/1 contract (docs/REPLAY.md).",
     )
     rsub = rep.add_subparsers(dest="replay_command", metavar="ACTION", required=True)
-    val = rsub.add_parser("validate", help="check a replay against the contract (exit 1 on problems)")
-    val.add_argument("replay", metavar="REPLAY")
-    inf = rsub.add_parser("info", help="print a replay's metadata, sample ticks, sets and fields as JSON")
-    inf.add_argument("replay", metavar="REPLAY")
-    con = rsub.add_parser("convert", help="re-export a replay as .usda or .usdc (by OUT's extension)")
-    con.add_argument("replay", metavar="REPLAY")
-    con.add_argument("out", metavar="OUT")
+    val = rsub.add_parser(
+        "validate",
+        help="check a replay against the contract (exit 1 on problems)",
+        description=(
+            "Check REPLAY against every rule of usd-replay/1 and print one line per problem, "
+            "prefixed with where it is (a prim path, the layer or its metadata); exit 1 if there is any."
+        ),
+    )
+    val.add_argument("replay", metavar="REPLAY", help="replay layer (.usda or .usdc)")
+    inf = rsub.add_parser(
+        "info",
+        help="print a replay's metadata, sample ticks, sets and fields as JSON",
+        description="Print REPLAY's metadata, sample ticks, entity sets, fields and stats as JSON.",
+    )
+    inf.add_argument("replay", metavar="REPLAY", help="replay layer (.usda or .usdc)")
+    con = rsub.add_parser(
+        "convert",
+        help="re-export a replay as .usda or .usdc (by OUT's extension)",
+        description="Validate REPLAY, then re-export it atomically to OUT; an invalid replay is not converted.",
+    )
+    con.add_argument("replay", metavar="REPLAY", help="replay layer to convert")
+    con.add_argument("out", metavar="OUT", help="output layer; .usda writes text, .usdc binary")
     return parser
 
 

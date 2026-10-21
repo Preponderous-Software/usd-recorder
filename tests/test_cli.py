@@ -2,6 +2,7 @@ import json
 import subprocess
 import sys
 
+import pytest
 from pxr import Sdf, Usd
 
 from usd_recorder import Recorder, has_clips
@@ -48,6 +49,20 @@ def test_inspect(tmp_path, capsys):
     text = capsys.readouterr().out
     assert "value clips      3 on /World" in text and "0 .. 6 at 10 per second" in text
     assert main(["inspect", str(tmp_path / "missing.usda")]) == 1
+
+
+def test_replay_actions_describe_their_arguments(capsys):
+    expected = {
+        "validate": ["every rule of usd-replay/1", "replay layer (.usda or .usdc)"],
+        "info": ["as JSON", "replay layer (.usda or .usdc)"],
+        "convert": ["an invalid replay is not converted", "replay layer to convert", ".usdc binary"],
+    }
+    for action, texts in expected.items():
+        with pytest.raises(SystemExit) as exc:
+            main(["replay", action, "--help"])
+        assert exc.value.code == 0
+        out = " ".join(capsys.readouterr().out.split())
+        assert all(text in out for text in texts), (action, out)
 
 
 def test_no_command_and_module_entry_point():
