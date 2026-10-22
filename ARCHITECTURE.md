@@ -165,8 +165,14 @@ for the unchunked layout: `begin_tick` / `entity(id).position(...).set(key, valu
 `event` / `end_tick`, then `write(path)` (temporary file + `std::rename`). It implements the same
 `Track` algorithm and lifecycle rules, so its time samples are identical to the Python
 `Recorder`'s for the same input (`tests/test_cpp_writer.py`). Entity ids are 64-bit integers;
-values are `bool`, `int32_t`, `double`, `std::string` and `Vec3`. Chunking, colours and geometry
-options are Python-only; a C++ run that needs chunks can be re-chunked in Python later.
+values are `bool`, `int32_t`, `double`, `std::string` and `Vec3`. The only options are
+`time_codes_per_second` and `up_axis`; the rest of the layout is fixed at the `Recorder`'s
+defaults (`/World`, `Entities`, `e_<id>` / `e_n<id>` names, `extras:` / `events:` namespaces,
+`metersPerUnit = 1`, a unit `Cube` with the default colour). Two things differ: `recorder:id`
+is `int64` (the `Recorder` writes `int`), and `customLayerData` carries
+`usdRecorder:writer = "cpp"` instead of `usdRecorder:version`. Python-only: chunking, `binary`,
+checkpoints, colours, the other geometry and naming options, string ids, `scene` and `metadata`.
+A C++ run that needs chunks can be re-chunked in Python later.
 
 ## Dependencies
 
@@ -201,7 +207,14 @@ the Python writer's sample for sample.
   with all three hooks (and nothing published when a hook fails), `set_manifest_defaults`.
 - `test_recorder.py`, `test_track.py`, `test_values.py`: behaviour and validation.
 - `test_live.py`: follower thread, atomic failure modes, staging cleanup, relocation.
-- `test_cli.py`, `test_example.py`, `test_cpp_writer.py`.
+- `test_cli.py`: `flatten` (default output, `--binary`, extension mismatch), `inspect` (text,
+  `--json`, a missing file), the replay actions' `--help`, no command, and
+  `python -m usd_recorder.cli --version`.
+- `test_example.py`: `random_walkers.py` records a chunked run; `grazers_replay.py` writes a
+  valid replay whose sampling rate does not change the run.
+- `test_cpp_writer.py`: compiles `cpp/tests/scenario.cpp` (skipped without a C++ compiler); its
+  layer opens cleanly, resolves to the same values at every tick as the `Recorder`'s layer for
+  the same scenario (`tests/cpp_scenario.py`), and keeps the entity lifecycle.
 - `test_replay.py`: the replay writer and reader, colour round trip, the CLI, and the validator
   against a good replay broken one rule at a time (25 ways).
 - `test_cpp_replay.py`: the C++ replay writer's output validates and equals the Python writer's.
