@@ -168,7 +168,8 @@ for the unchunked layout: `begin_tick` / `entity(id).position(...).set(key, valu
 values are `bool`, `int32_t`, `double`, `std::string` and `Vec3`. The only options are
 `time_codes_per_second` and `up_axis`; the rest of the layout is fixed at the `Recorder`'s
 defaults (`/World`, `Entities`, `e_<id>` / `e_n<id>` names, `extras:` / `events:` namespaces,
-`metersPerUnit = 1`, a unit `Cube` with the default colour), and `customLayerData` carries
+`metersPerUnit = 1`, a unit `Cube` with the default colour). Two things differ: `recorder:id`
+is `int64` (the `Recorder` writes `int`), and `customLayerData` carries
 `usdRecorder:writer = "cpp"` instead of `usdRecorder:version`. Python-only: chunking, `binary`,
 checkpoints, colours, the other geometry and naming options, string ids, `scene` and `metadata`.
 A C++ run that needs chunks can be re-chunked in Python later.
