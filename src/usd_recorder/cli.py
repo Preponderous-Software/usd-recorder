@@ -15,8 +15,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="usd-recorder",
         description=(
-            "Inspect and flatten time-sampled OpenUSD recordings; validate, describe and convert "
-            "usd-replay/1 replays."
+            "Inspect and flatten time-sampled OpenUSD recordings; validate, describe and convert usd-replay/1 replays."
         ),
     )
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
