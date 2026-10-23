@@ -51,6 +51,15 @@ def test_inspect(tmp_path, capsys):
     assert main(["inspect", str(tmp_path / "missing.usda")]) == 1
 
 
+def test_help_names_every_command(capsys):
+    with pytest.raises(SystemExit) as exc:
+        main(["--help"])
+    assert exc.value.code == 0
+    out = " ".join(capsys.readouterr().out.split())
+    assert "Inspect and flatten" in out and "usd-replay/1 replays" in out
+    assert all(command in out for command in ("flatten", "inspect", "replay"))
+
+
 def test_replay_actions_describe_their_arguments(capsys):
     expected = {
         "validate": ["every rule of usd-replay/1", "replay layer (.usda or .usdc)"],

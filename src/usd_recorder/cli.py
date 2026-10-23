@@ -14,7 +14,9 @@ from .inspect import format_summary, inspect_stage
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="usd-recorder",
-        description="Inspect and flatten time-sampled OpenUSD recordings.",
+        description=(
+            "Inspect and flatten time-sampled OpenUSD recordings; validate, describe and convert usd-replay/1 replays."
+        ),
     )
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     sub = parser.add_subparsers(dest="command", metavar="COMMAND")
