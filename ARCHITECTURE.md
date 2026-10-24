@@ -123,12 +123,12 @@ raw USD and checks the fix.
 
 ### `stitch`
 
-`stitch(root, chunks, clip_prim, topology=, manifest=, root=)` is the public form. It stitches
-under temporary names in the same directory, runs the hooks, then moves the topology, the
-manifest and finally the root over their final names, each with `os.replace`. A reader polling
-the root never sees one whose topology or manifest is missing or stale. (The staging root's name
-is rewritten to the final one in the references; the result is byte-identical to stitching in
-place, which viron-usd's golden tests check.)
+`stitch(root_path, chunk_paths, clip_prim, *, topology=, manifest=, root=)` is the public form.
+It stitches under temporary names in the same directory, runs the hooks, then moves the
+topology, the manifest and finally the root over their final names, each with `os.replace`. A
+reader polling the root never sees one whose topology or manifest is missing or stale. (The
+staging root's name is rewritten to the final one in the references; the result is
+byte-identical to stitching in place, which viron-usd's golden tests check.)
 
 ## Flatten
 
@@ -191,7 +191,9 @@ entities over thousands of samples stay one compact `.usdc` that a player decode
 composing anything. `ReplayWriter` builds it on an in-memory stage and exports it atomically on
 `close()`; it validates a whole sample before writing any of it, and does not resample a field
 whose colours did not change. `validate_replay` checks every rule of the contract and returns one
-message per problem; `read_replay` loads a replay into numpy arrays (validating first).
+message per problem; `read_replay` loads a replay into numpy arrays (validating first);
+`replay_info` summarises one as plain data, and `convert` re-exports a layer atomically as `.usda`
+or `.usdc` by the destination's extension (the CLI validates before converting).
 
 Colours are converted from sRGB to linear on the way in (`srgb_to_linear`) and back with
 `linear_to_srgb8`; the conversion round-trips every byte. The C++ `replay_writer.hpp` uses the

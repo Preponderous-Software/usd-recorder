@@ -137,8 +137,8 @@ A runnable example: `python examples/random_walkers.py out/run.usda --chunk-size
 ```
 
 Options cover the root path, scope name, up axis, metres per unit, geometry and size, default
-colour, prim naming, the attribute namespace, a `scene` hook for static geometry, and layer
-metadata. See [ARCHITECTURE.md](ARCHITECTURE.md).
+colour, prim naming, the extras and events namespaces, a `scene` hook for static geometry, and
+layer metadata. See [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ### Building blocks
 
