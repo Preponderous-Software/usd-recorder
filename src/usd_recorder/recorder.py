@@ -130,7 +130,8 @@ class Recorder:
     ``up_axis`` (``"Z"`` or ``"Y"``), ``meters_per_unit``, ``geometry`` (``"cube"``,
     ``"sphere"`` or ``None``) and ``entity_size`` for the entity's ``geom`` child,
     ``default_color`` (a colour, or a function of the entity id), ``entity_name`` (entity id →
-    prim name), ``namespace`` for typed values (``extras``), ``scene`` (a function that authors
+    prim name), ``namespace`` for typed values (``extras``), ``events_namespace`` for event
+    channels (``events``), ``scene`` (a function that authors
     the static part of the scene; it runs once, in the topology layer when chunked),
     ``metadata`` (``customLayerData`` of the root layer) and ``checkpoint_every`` (publish the
     recording so far, atomically, every N ticks: see :meth:`checkpoint`).
