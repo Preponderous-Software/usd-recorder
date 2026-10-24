@@ -123,12 +123,12 @@ raw USD and checks the fix.
 
 ### `stitch`
 
-`stitch(root_path, chunk_paths, clip_prim, *, topology=, manifest=, root=)` is the public form. It stitches
-under temporary names in the same directory, runs the hooks, then moves the topology, the
-manifest and finally the root over their final names, each with `os.replace`. A reader polling
-the root never sees one whose topology or manifest is missing or stale. (The staging root's name
-is rewritten to the final one in the references; the result is byte-identical to stitching in
-place, which viron-usd's golden tests check.)
+`stitch(root_path, chunk_paths, clip_prim, *, topology=, manifest=, root=)` is the public form.
+It stitches under temporary names in the same directory, runs the hooks, then moves the
+topology, the manifest and finally the root over their final names, each with `os.replace`. A
+reader polling the root never sees one whose topology or manifest is missing or stale. (The
+staging root's name is rewritten to the final one in the references; the result is
+byte-identical to stitching in place, which viron-usd's golden tests check.)
 
 ## Flatten
 
