@@ -142,6 +142,10 @@ problems = validate_replay("run.usdc")  # [] when it conforms
 replay = read_replay("run.usdc")  # metadata, ticks, hashes and arrays per sample
 ```
 
+C++ consumers use `usd_recorder::read_replay` from `cpp/reader` (it links OpenUSD; see the
+README's "C++ reader"). It returns the same data as the Python `read_replay`, refuses any major
+version but 1, and checks only what it needs to index the arrays; it is not a validator.
+
 The validator checks every rule above (layer shape, metadata, sample ticks, per-set lengths
 and id uniqueness, interpolation, field sizes and sample subsets, static scene) and reports
 each problem with its prim path. `tests/test_replay.py` breaks a good replay one rule at a

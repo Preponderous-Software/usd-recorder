@@ -65,3 +65,160 @@ jobs:
             cpp/tests/replay_scenario.cpp -o replay_scenario
           ./replay_scenario replay.usda
           head -30 replay.usda
+
+  # The C++ usd-replay/1 reader (cpp/reader) against OpenUSD v26.08, the build Strata pins
+  # (modules/usd/openusd/openusd.lock there). Strata publishes it as a prebuilt release asset;
+  # it is downloaded and its SHA-256 checked, never built here. The reader must print the same
+  # canonical JSON as the Python read_replay on usd-recorder's own fixtures and on one replay
+  # from each conforming producer, built from a pinned commit, and must never crash on damaged
+  # files (cpp/reader/tests/fuzz.py).
+  cpp-reader:
+    name: C++ reader (Linux, OpenUSD v26.08)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      OPENUSD_KEY: openusd-v26.08-ubuntu24.04-gcc13-cdd5cf8adfa8
+      OPENUSD_SHA256: 4e91ed5e41ec355f3fc766173dcea61bf6716c1aa8cdc2a4df61e70f92066545
+      # One pinned commit per conforming producer (docs/REPLAY.md lists none; these are the
+      # projects whose CI validates their replays with `usd-recorder replay validate`).
+      STEADING_REF: 3067c47c06221e44cbc8defdc12d959ae75b8eed
+      KINDLING_REF: 63e9bd4a7eca7f23d113d56fc28b5150d126c9ab
+      BEYOND_NATIONS_REF: 2e776548c2202576232096483c183206bed877dc
+      MICROBIOME_REF: d2fca5f99f331fadaca3856b29b9212317d728f8
+      LIBGL_ALWAYS_SOFTWARE: "1"
+      GALLIUM_DRIVER: llvmpipe
+      __EGL_VENDOR_LIBRARY_FILENAMES: /usr/share/glvnd/egl_vendor.d/50_mesa.json
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Fetch OpenUSD (Strata's prebuilt, SHA-256 checked)
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/openusd.tar.gz" \
+            "https://github.com/Preponderous-Software/strata/releases/download/${OPENUSD_KEY}/${OPENUSD_KEY}.tar.gz"
+          echo "${OPENUSD_SHA256}  $RUNNER_TEMP/openusd.tar.gz" | sha256sum -c -
+          mkdir -p "$RUNNER_TEMP/openusd"
+          tar -C "$RUNNER_TEMP/openusd" -xzf "$RUNNER_TEMP/openusd.tar.gz"
+          echo "OPENUSD_DIR=$RUNNER_TEMP/openusd/${OPENUSD_KEY}" >> "$GITHUB_ENV"
+
+      - name: Build the reader with warnings as errors
+        run: |
+          cmake -S cpp -B build-reader -DCMAKE_BUILD_TYPE=Release -DUSD_RECORDER_BUILD_READER=ON \
+            -DUSD_RECORDER_WARNINGS_AS_ERRORS=ON -DCMAKE_PREFIX_PATH="$OPENUSD_DIR"
+          cmake --build build-reader -j "$(nproc)"
+          echo "USD_RECORDER_REPLAY_DUMP=$PWD/build-reader/reader/replay-dump" >> "$GITHUB_ENV"
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Reader tests (usd-recorder's own fixtures, refusals)
+        run: python -m pytest -v tests/test_cpp_reader.py
+
+      - name: Producer corpus (one replay from each conforming producer, pinned)
+        run: |
+          set -euo pipefail
+          mkdir -p corpus "$RUNNER_TEMP/src"
+          fetch() {
+            git init -q "$RUNNER_TEMP/src/$1"
+            git -C "$RUNNER_TEMP/src/$1" fetch -q --depth 1 "https://github.com/Preponderous-Software/$1.git" "$2"
+            git -C "$RUNNER_TEMP/src/$1" checkout -q FETCH_HEAD
+          }
+          # steading: steading-replay (no engine), seed 42.
+          fetch steading "$STEADING_REF"
+          cmake -S "$RUNNER_TEMP/src/steading" -B "$RUNNER_TEMP/steading-build" -DCMAKE_BUILD_TYPE=Release \
+            -DSTEADING_BUILD_TESTS=OFF
+          cmake --build "$RUNNER_TEMP/steading-build" -j "$(nproc)" --target steading-replay
+          "$RUNNER_TEMP/steading-build/steading-replay" --new 42 --ticks 200 --every 4 --out corpus/steading-seed42.usda
+          # Kindling: the restoration prototype, as Kindling's CI builds it.
+          fetch kindling "$KINDLING_REF"
+          g++ -std=c++17 -O2 -I cpp/include "$RUNNER_TEMP/src/kindling/prototypes/restore-replay/restore.cpp" \
+            -o "$RUNNER_TEMP/restore"
+          "$RUNNER_TEMP/restore" corpus/kindling-restore.usda
+          # Beyond Nations: a history export through tools/history-to-replay.py (written as .usdc).
+          fetch beyond-nations "$BEYOND_NATIONS_REF"
+          dotnet run --project "$RUNNER_TEMP/src/beyond-nations/tools/BeyondNations.HistoryExport" -c Release -- \
+            --seed 12 --ticks 60000 --every 200 --out "$RUNNER_TEMP/bn.jsonl"
+          python "$RUNNER_TEMP/src/beyond-nations/tools/history-to-replay.py" "$RUNNER_TEMP/bn.jsonl" \
+            corpus/beyond-nations-seed12.usdc --stride 2000
+          # microbiome: mb_strata --record (Strata, headless on llvmpipe).
+          sudo apt-get update -q
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -q --no-install-recommends \
+            libx11-dev libxext-dev libxcursor-dev libxi-dev libxfixes-dev libxrandr-dev libxss-dev \
+            libegl-dev libgl-dev libegl1 libegl-mesa0 libgl1-mesa-dri
+          fetch microbiome "$MICROBIOME_REF"
+          cmake -S "$RUNNER_TEMP/src/microbiome/strata" -B "$RUNNER_TEMP/mb-build" -DCMAKE_BUILD_TYPE=Release \
+            -DMB_STRATA_BUILD_TESTS=OFF
+          cmake --build "$RUNNER_TEMP/mb-build" -j "$(nproc)" --target mb_strata
+          "$RUNNER_TEMP/mb-build/mb_strata" --headless --ticks 300 --no-hud --window-width 64 --window-height 64 \
+            --record corpus/microbiome-seed1.usda --record-every 10 --record-field 32
+          for f in corpus/*; do usd-recorder replay validate "$f"; done
+          # Each text replay also as .usdc, so both crate and text paths are compared.
+          for f in corpus/*.usda; do usd-recorder replay convert "$f" "${f%.usda}.usdc"; done
+          ls -l corpus
+
+      - name: C++ and Python readers agree on the producer corpus
+        run: python cpp/reader/tests/conformance.py --dump "$USD_RECORDER_REPLAY_DUMP" corpus/*
+
+      - name: Fuzz (truncated and bit-flipped replays are read or refused, never crash)
+        run: |
+          python cpp/reader/tests/fuzz.py --dump "$USD_RECORDER_REPLAY_DUMP" --runs 40 --keep fuzz-failures \
+            corpus/kindling-restore.usda corpus/kindling-restore.usdc corpus/steading-seed42.usdc \
+            corpus/beyond-nations-seed12.usdc
+
+      - name: Upload fuzz failures
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fuzz-failures
+          path: fuzz-failures/
+          if-no-files-found: ignore
+
+  cpp-reader-windows:
+    name: C++ reader (Windows, OpenUSD v26.08)
+    runs-on: windows-2022
+    timeout-minutes: 45
+    env:
+      OPENUSD_KEY: openusd-v26.08-windows2022-msvc143-51c7751f88df
+      OPENUSD_SHA256: 64d06b4f029a77107ba975f3210a14628924ee9b1576d276bd4cebc274c287e8
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Fetch OpenUSD (Strata's prebuilt, SHA-256 checked)
+        run: |
+          curl -fsSL -o openusd.tar.gz \
+            "https://github.com/Preponderous-Software/strata/releases/download/${OPENUSD_KEY}/${OPENUSD_KEY}.tar.gz"
+          echo "${OPENUSD_SHA256}  openusd.tar.gz" | sha256sum -c -
+          mkdir -p /c/openusd
+          tar -C /c/openusd -xzf openusd.tar.gz
+          # OpenUSD finds its plugins next to its DLLs: put them on PATH, never copy them.
+          echo "C:\\openusd\\${OPENUSD_KEY}\\lib" >> "$GITHUB_PATH"
+          echo "C:\\openusd\\${OPENUSD_KEY}\\bin" >> "$GITHUB_PATH"
+
+      - name: Build the reader with warnings as errors (MSVC)
+        run: |
+          cmake -S cpp -B build-reader -G "Visual Studio 17 2022" -A x64 -DUSD_RECORDER_BUILD_READER=ON \
+            -DUSD_RECORDER_WARNINGS_AS_ERRORS=ON -DCMAKE_PREFIX_PATH="C:/openusd/${OPENUSD_KEY}"
+          cmake --build build-reader --config Release --parallel 4
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Reader tests (the same JSON as the Python reader; refusals)
+        run: |
+          export USD_RECORDER_REPLAY_DUMP="$PWD/build-reader/reader/Release/replay-dump.exe"
+          python -m pytest -v tests/test_cpp_reader.py

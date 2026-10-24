@@ -85,6 +85,11 @@ usd-recorder replay convert run.usda run.usdc  # e.g. after the C++ writer
 C++ sims use the dependency-free `cpp/include/usd_recorder/replay_writer.hpp` (writes `.usda`,
 same samples as the Python writer, checked by `tests/test_cpp_replay.py`).
 
+C++ consumers read replays with `usd_recorder::read_replay` (`cpp/reader`), an optional CMake
+target that links OpenUSD (`-DUSD_RECORDER_BUILD_READER=ON`, see [C++ reader](#c-reader)). CI
+checks that it gives the same result as the Python `read_replay` on every fixture and on a replay
+from each conforming producer.
+
 ## Install
 
 ```bash
@@ -168,6 +173,32 @@ rec.write("run.usda");
 
 `tests/test_cpp_writer.py` compiles a scenario with `-Wall -Wextra -Werror -pedantic` and checks
 that its stage has the same time samples as the Python `Recorder`'s for the same scenario.
+
+### C++ reader
+
+```cpp
+#include "usd_recorder/replay_reader.hpp"
+
+usd_recorder::Replay r = usd_recorder::read_replay("run.usdc");  // throws usd_recorder::ReplayError
+for (size_t k = 0; k < r.ticks.size(); ++k) {
+    // r.hashes[k]; r.sets[s].ids[k], r.sets[s].points[k]; fields hold, see docs/REPLAY.md
+}
+```
+
+The writers stay header-only and dependency-free. The reader is a separate target,
+`usd_recorder::replay_reader`, built only with `-DUSD_RECORDER_BUILD_READER=ON` and linked against
+OpenUSD (Sdf, Usd, UsdGeom) found as a CMake package:
+
+```bash
+cmake -S cpp -B build-reader -DUSD_RECORDER_BUILD_READER=ON -DCMAKE_PREFIX_PATH=/path/to/openusd
+cmake --build build-reader
+build-reader/reader/replay-dump run.usdc   # the replay as canonical JSON
+```
+
+CI uses OpenUSD v26.08, the build [Strata](https://github.com/Preponderous-Software/strata)
+pins, from the prebuilt install Strata publishes (Linux GCC 13 and Windows MSVC). From CMake,
+`add_subdirectory(cpp)` or `FetchContent_Declare(usd_recorder ... SOURCE_SUBDIR cpp)` with the
+option set gives `usd_recorder::replay_reader`.
 
 ## Development
 
