@@ -12,6 +12,11 @@ src/usd_recorder/
   cli.py        usd-recorder flatten | inspect | replay {validate,info,convert}
 cpp/include/usd_recorder/usda_writer.hpp    header-only C++17 .usda writer (Recorder layout)
 cpp/include/usd_recorder/replay_writer.hpp  header-only C++17 .usda writer (replay contract)
+cpp/reader/                                 C++ replay reader (links OpenUSD; optional target)
+  include/usd_recorder/replay_reader.hpp    read_replay, Replay, ReadOptions, ReplayError
+  src/replay_reader.cpp
+  tools/replay_dump.cpp                     replay-dump: a replay as canonical JSON
+  tests/                                    dump_python.py, conformance.py, fuzz.py
 ```
 
 ## Time
@@ -174,6 +179,41 @@ is `int64` (the `Recorder` writes `int`), and `customLayerData` carries
 checkpoints, colours, the other geometry and naming options, string ids, `scene` and `metadata`.
 A C++ run that needs chunks can be re-chunked in Python later.
 
+## C++ reader
+
+`cpp/reader` is the contract's second reader, in C++: `read_replay(path, options)` returns a
+`Replay` of plain structs (`std::vector`s; colours linear `float` as authored; positions
+`float[3]`) with the same fields as the Python `Replay` and read the same way, attribute by
+attribute, so the two agree exactly. It is not a validator. It checks what a consumer needs in
+order to index the arrays safely and refuses anything else it cannot draw:
+
+- the `usdReplay.schema` major version (only `usd-replay/1`; REPLAY.md § Versioning);
+- one layer with no sublayers, and `defaultPrim = "Replay"`;
+- `/Replay.replay:stateHash` with at least one time sample (the sample ticks);
+- per set and sample, as many `points` as `ids`, and as many vertex colours and widths;
+- per field, a size of at least 1 x 1 and at most 2^24 cells, and `cols * rows` colours in every
+  sample;
+- scene colours and widths of one value or one per point.
+
+Replays are files from other people. `ReadOptions::max_bytes` (2 GiB by default) caps the memory
+the arrays may take, and a file that would need more is refused before it is copied. Every failure
+is a `ReplayError`, including OpenUSD's own exceptions and `std::bad_alloc`.
+
+**Conformance.** `replay-dump` prints a replay as canonical JSON (sorted keys, integers as
+integers, every other number as `%.17g`, which is exact for `float` and `double`, strings escaped
+to ASCII as Python's `json` does). `tests/dump_python.py` prints the Python `read_replay`'s result
+the same way, and `conformance.py` compares them byte for byte. `tests/test_cpp_reader.py` runs
+that on usd-recorder's own fixtures (both writers, text and binary, plus edge cases) when
+`USD_RECORDER_REPLAY_DUMP` names a built `replay-dump`; CI's `C++ reader` jobs also run it on a
+replay built from a pinned commit of each conforming producer (steading, Kindling, Beyond Nations,
+microbiome) and fuzz the reader with truncated and bit-flipped copies (`fuzz.py`: every file is
+read or refused, nothing crashes, hangs or exceeds 4 GiB).
+
+**A shutdown trap.** After OpenUSD's text parser fails on a damaged `.usda`, process teardown
+sometimes aborts inside OpenUSD ("pure virtual method called") after `main` has returned. A
+program that only calls `SdfLayer::FindOrOpen` shows it too. `replay-dump` therefore leaves with
+`std::_Exit` once its output is flushed; a long-lived consumer is not affected until it exits.
+
 ## Dependencies
 
 `usd-core` is pinned exactly (26.8): the value-clip behaviour the tests assert is usd-core's, and
@@ -220,3 +260,6 @@ the Python writer's sample for sample.
 - `test_replay.py`: the replay writer and reader, colour round trip, the CLI, and the validator
   against a good replay broken one rule at a time (25 ways).
 - `test_cpp_replay.py`: the C++ replay writer's output validates and equals the Python writer's.
+- `test_cpp_reader.py` (skipped unless `USD_RECORDER_REPLAY_DUMP` is set): the C++ reader prints
+  the same canonical JSON as the Python reader on every fixture, and refuses another major
+  version, sublayers, a missing state hash, a non-replay and mismatched ids and points.
