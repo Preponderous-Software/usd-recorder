@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 from pxr import Sdf, Usd, UsdGeom
 
-from usd_recorder import Recorder, TypeChangeError, default_entity_name
+from usd_recorder import Recorder, TypeChangeError, __version__, default_entity_name
 
 
 def vis(stage, path, t):
@@ -32,7 +32,7 @@ def test_stage_metadata(tmp_path):
     assert (stage.GetStartTimeCode(), stage.GetEndTimeCode()) == (3, 9)
     assert stage.GetDefaultPrim().GetPath() == "/World"
     data = stage.GetRootLayer().customLayerData
-    assert data["sim:seed"] == 7 and data["usdRecorder:version"] == "0.2.0"
+    assert data["sim:seed"] == 7 and data["usdRecorder:version"] == __version__
 
 
 def test_entity_appears_disappears_and_returns(tmp_path):
