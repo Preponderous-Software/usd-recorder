@@ -4,6 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "usd-recorder"
+# Kept equal to usd_recorder.__version__ (tests/test_cli.py checks); release tooling reads it statically.
+version = "0.3.0"
 description = "Record a simulation tick by tick as a time-sampled OpenUSD stage: entity lifecycle, typed extras, event channels, chunked value clips, flatten, atomic live writes."
 readme = "README.md"
 license = "MIT"
@@ -16,7 +18,6 @@ dependencies = [
     # The replay contract (usd_recorder.replay) moves arrays through numpy.
     "numpy>=1.26",
 ]
-dynamic = ["version"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
@@ -35,9 +36,6 @@ usd-recorder = "usd_recorder.cli:main"
 
 [project.urls]
 Repository = "https://github.com/Preponderous-Software/usd-recorder"
-
-[tool.setuptools.dynamic]
-version = { attr = "usd_recorder.__version__" }
 
 [tool.setuptools.packages.find]
 where = ["src"]
