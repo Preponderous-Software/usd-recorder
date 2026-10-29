@@ -250,8 +250,8 @@ the Python writer's sample for sample.
 - `test_recorder.py`, `test_track.py`, `test_values.py`: behaviour and validation.
 - `test_live.py`: follower thread, atomic failure modes, staging cleanup, relocation.
 - `test_cli.py`: `flatten` (default output, `--binary`, extension mismatch), `inspect` (text,
-  `--json`, a missing file), the top-level and replay actions' `--help`, no command, and
-  `python -m usd_recorder.cli --version`.
+  `--json`, a missing file), the top-level and replay actions' `--help`, no command,
+  `python -m usd_recorder.cli --version`, and `pyproject.toml`'s version matching `__version__`.
 - `test_example.py`: `random_walkers.py` records a chunked run; `grazers_replay.py` writes a
   valid replay whose sampling rate does not change the run.
 - `test_cpp_writer.py`: compiles `cpp/tests/scenario.cpp` (skipped without a C++ compiler); its

@@ -1,6 +1,8 @@
 import json
+import re
 import subprocess
 import sys
+from pathlib import Path
 
 import pytest
 from pxr import Sdf, Usd
@@ -78,3 +80,11 @@ def test_no_command_and_module_entry_point():
     assert main([]) == 2
     proc = subprocess.run([sys.executable, "-m", "usd_recorder.cli", "--version"], capture_output=True, text=True)
     assert proc.returncode == 0 and proc.stdout == f"usd-recorder {__version__}\n"
+
+
+def test_pyproject_version_matches_package_version():
+    # pyproject.toml declares the version statically (release tooling reads it without building), so it must
+    # move with __version__.
+    pyproject = (Path(__file__).resolve().parents[1] / "pyproject.toml").read_text(encoding="utf-8")
+    declared = re.search(r'^version = "([^"]+)"$', pyproject, re.MULTILINE)
+    assert declared is not None and declared.group(1) == __version__
