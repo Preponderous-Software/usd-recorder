@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "usd-recorder"
 # Kept equal to usd_recorder.__version__ (tests/test_cli.py checks); release tooling reads it statically.
-version = "0.3.0"
+version = "0.3.1.dev0"
 description = "Record a simulation tick by tick as a time-sampled OpenUSD stage: entity lifecycle, typed extras, event channels, chunked value clips, flatten, atomic live writes."
 readme = "README.md"
 license = "MIT"
