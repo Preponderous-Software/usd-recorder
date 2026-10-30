@@ -252,6 +252,9 @@ the Python writer's sample for sample.
 - `test_cli.py`: `flatten` (default output, `--binary`, extension mismatch), `inspect` (text,
   `--json`, a missing file), the top-level and replay actions' `--help`, no command,
   `python -m usd_recorder.cli --version`, and `pyproject.toml`'s version matching `__version__`.
+- `test_inspect.py`: `inspect_stage` without the CLI: every summary field on a hand-built stage
+  with known prim and sample counts, plain (JSON-safe) layer data, a binary recording, a chunked
+  recording's clip entries, `format_summary`'s lines, and a missing file.
 - `test_example.py`: `random_walkers.py` records a chunked run; `grazers_replay.py` writes a
   valid replay whose sampling rate does not change the run.
 - `test_cpp_writer.py`: compiles `cpp/tests/scenario.cpp` (skipped without a C++ compiler); its
