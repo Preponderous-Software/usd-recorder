@@ -38,7 +38,8 @@ come from, so the next simulation gets them for free.
   checked by re-running the seed.
 - A CLI to inspect and flatten recordings, and to validate, describe and convert replays.
 - Header-only C++ writers for simulations written in C++ that want the same layouts (a recording
-  or a replay) without linking OpenUSD.
+  or a replay) without linking OpenUSD, and a C++ replay reader (`cpp/reader`, an optional target
+  that links OpenUSD) that reads replays the same way as the Python reader.
 
 ## What it is not
 
