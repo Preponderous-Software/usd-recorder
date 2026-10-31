@@ -204,10 +204,11 @@ integers, every other number as `%.17g`, which is exact for `float` and `double`
 to ASCII as Python's `json` does). `tests/dump_python.py` prints the Python `read_replay`'s result
 the same way, and `conformance.py` compares them byte for byte. `tests/test_cpp_reader.py` runs
 that on usd-recorder's own fixtures (both writers, text and binary, plus edge cases) when
-`USD_RECORDER_REPLAY_DUMP` names a built `replay-dump`; CI's `C++ reader` jobs also run it on a
-replay built from a pinned commit of each conforming producer (steading, Kindling, Beyond Nations,
-microbiome) and fuzz the reader with truncated and bit-flipped copies (`fuzz.py`: every file is
-read or refused, nothing crashes, hangs or exceeds 4 GiB).
+`USD_RECORDER_REPLAY_DUMP` names a built `replay-dump` (CI's `C++ reader` jobs do this on Linux
+and on Windows with MSVC). The Linux job also runs it on a replay built from a pinned commit of
+each conforming producer (steading, Kindling, Beyond Nations, microbiome) and fuzzes the reader
+with truncated and bit-flipped copies (`fuzz.py`: every file is read or refused, nothing crashes,
+hangs or exceeds 4 GiB).
 
 **A shutdown trap.** After OpenUSD's text parser fails on a damaged `.usda`, process teardown
 sometimes aborts inside OpenUSD ("pure virtual method called") after `main` has returned. A
