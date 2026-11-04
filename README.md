@@ -93,7 +93,7 @@ from each conforming producer.
 ## Install
 
 ```bash
-pip install "usd-recorder @ git+https://github.com/Preponderous-Software/usd-recorder@v0.3.0"
+pip install "usd-recorder @ git+https://github.com/Preponderous-Software/usd-recorder@v0.3.1"
 ```
 
 Python 3.10+; depends on `usd-core` (pinned to 26.8) and numpy. Not on PyPI yet: pin the git tag.
