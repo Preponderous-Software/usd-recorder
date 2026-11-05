@@ -35,7 +35,7 @@ call; gaps are allowed. `time_codes_per_second` sets both `timeCodesPerSecond` a
   events:<channel>             string event channels (option `events_namespace`)
   Entities                     Scope (option `entities`)
     <name>                     Xform per entity; <name> = entity_name(id), default e_<id>
-      recorder:id              the entity id (int or string), not time-sampled
+      recorder:id              the entity id (32-bit int or string), not time-sampled
       visibility               inherited while present, invisible otherwise
       xformOp:translate        double3, from the `position` key
       extras:<key>             typed values
@@ -78,8 +78,9 @@ its first value per entity (and per stage for `extras`); a different type raises
 `TypeChangeError`. Keys must be valid USD property names (`a`, `a:b_2`). `position` and `color`
 are reserved entity keys.
 
-`record` validates everything (tick order, positions, colours, types, names) before writing
-anything, so a call that raises leaves the recording unchanged.
+`record` validates everything (tick order, entity ids, positions, colours, types, names) before
+writing anything, so a call that raises leaves the recording unchanged. An `int` entity id must
+fit the signed 32-bit `recorder:id`, else `ValueError`.
 
 ## Event channels
 
@@ -174,9 +175,10 @@ values are `bool`, `int32_t`, `double`, `std::string` and `Vec3`. The only optio
 `time_codes_per_second` and `up_axis`; the rest of the layout is fixed at the `Recorder`'s
 defaults (`/World`, `Entities`, `e_<id>` / `e_n<id>` names, `extras:` / `events:` namespaces,
 `metersPerUnit = 1`, a unit `Cube` with the default colour). Two things differ: `recorder:id`
-is `int64` (the `Recorder` writes `int`), and `customLayerData` carries
-`usdRecorder:writer = "cpp"` instead of `usdRecorder:version`. Python-only: chunking, `binary`,
-checkpoints, colours, the other geometry and naming options, string ids, `scene` and `metadata`.
+is `int64` (the `Recorder` writes `int` and refuses an id outside 32 bits), and
+`customLayerData` carries `usdRecorder:writer = "cpp"` instead of `usdRecorder:version`.
+Python-only: chunking, `binary`, checkpoints, colours, the other geometry and naming options,
+string ids, `scene` and `metadata`.
 A C++ run that needs chunks can be re-chunked in Python later.
 
 ## C++ reader

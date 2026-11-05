@@ -22,6 +22,8 @@ from .atomic import atomic_export, layer_format
 from .clips import chunk_name, default_invisible, set_manifest_defaults, stitch
 from .track import Track
 from .values import (
+    INT32_MAX,
+    INT32_MIN,
     SDF_TYPES,
     TypeChangeError,
     is_finite_vec3,
@@ -233,10 +235,11 @@ class Recorder:
     ) -> None:
         """Record one tick.
 
-        ``entities`` maps each entity present at ``tick`` to its values: ``position`` (three
-        numbers), ``color`` (three numbers in [0, 1], on the entity's geometry), and any other
-        key as a typed value (bool, int, double, string or double3) under the namespace. A key
-        not given keeps its last value. ``extras`` are typed values of the stage itself.
+        ``entities`` maps each entity present at ``tick`` (a string id, or an int id in the
+        signed 32-bit range) to its values: ``position`` (three numbers), ``color`` (three
+        numbers in [0, 1], on the entity's geometry), and any other key as a typed value (bool,
+        int, double, string or double3) under the namespace. A key not given keeps its last
+        value. ``extras`` are typed values of the stage itself.
         ``events`` maps a channel name to what happened on it this tick (a string, or a list of
         strings joined with newlines); a channel reads ``""`` on every tick it has no event.
 
@@ -321,6 +324,8 @@ class Recorder:
         for entity_id, values in entities.items():
             known = self._known.get(entity_id)
             if known is None:
+                if isinstance(entity_id, int) and not INT32_MIN <= entity_id <= INT32_MAX:
+                    raise ValueError(f"entity id {entity_id} is outside the 32-bit range of recorder:id")
                 name = self._entity_name(entity_id)
                 if not isinstance(name, str) or not Sdf.Path.IsValidIdentifier(name):
                     raise ValueError(f"entity {entity_id!r}: {name!r} is not a valid prim name")
