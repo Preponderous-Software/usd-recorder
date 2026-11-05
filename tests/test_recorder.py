@@ -70,6 +70,28 @@ def test_typed_values_hold_and_type_changes_are_rejected_without_writing(tmp_pat
     assert prim.GetAttribute("extras:dir").GetTypeName() == Sdf.ValueTypeNames.Double3
 
 
+@pytest.mark.parametrize("entity_id", [2**31, -(2**31) - 1, 2**40])
+def test_entity_id_outside_32_bits_is_rejected_without_writing(tmp_path, entity_id):
+    rec = Recorder(tmp_path / "r.usda", 10)
+    rec.record(0, {1: {"position": (0, 0, 0)}})
+    with pytest.raises(ValueError, match=str(entity_id)):
+        rec.record(1, {1: {"position": (1, 0, 0)}, entity_id: {"position": (5, 5, 0)}})
+    assert rec.last_tick == 0 and rec.entity_ids() == [1]  # the failed tick changed nothing
+    rec.record(1, {1: {"position": (2, 0, 0)}})
+    rec.close()
+    stage = open_stage(tmp_path / "r.usda")
+    assert stage.GetPrimAtPath("/World/Entities/e_1").GetAttribute("xformOp:translate").Get(1) == (2, 0, 0)
+    assert len(stage.GetPrimAtPath("/World/Entities").GetChildren()) == 1
+
+
+@pytest.mark.parametrize("entity_id", [2**31 - 1, -(2**31)])
+def test_entity_id_at_the_32_bit_limits_is_recorded(tmp_path, entity_id):
+    with Recorder(tmp_path / "r.usda", 10) as rec:
+        rec.record(0, {entity_id: {"position": (0, 0, 0)}})
+        path = rec.entity_path(entity_id)
+    assert open_stage(tmp_path / "r.usda").GetPrimAtPath(path).GetAttribute("recorder:id").Get() == entity_id
+
+
 def test_stage_extras_and_string_channels_hold(tmp_path):
     with Recorder(tmp_path / "r.usda", 10) as rec:
         rec.record(0, extras={"phase": "day", "temp": 20.0})
