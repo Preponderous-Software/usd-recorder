@@ -2,7 +2,8 @@
 //
 // The replay contract (docs/REPLAY.md) for simulations written in C++, without linking OpenUSD.
 // Standard library only. Samples are formatted into memory as they arrive and written as one
-// text .usda on write(), which replaces the file atomically (temporary file + std::rename).
+// text .usda on write(), which replaces the file atomically (temporary file + std::rename; on
+// Windows the old file is removed first, so the replace is not atomic there).
 // `usd-recorder replay convert run.usda run.usdc` makes the compact binary file to publish.
 //
 //   usd_recorder::ReplayMeta meta;
@@ -471,6 +472,8 @@ public:
     }
 
     // Write the replay to `path` (.usda) atomically: a temporary file next to it, then rename.
+    // The existing file is never removed before the rename except on Windows, where std::rename
+    // cannot replace; if the rename fails, the existing file is left in place.
     void write(const std::string& path) const {
         if (open_) throw std::logic_error("write inside a sample");
         const std::string text = usda();
@@ -481,7 +484,9 @@ public:
             f.write(text.data(), static_cast<std::streamsize>(text.size()));
             if (!f) throw std::runtime_error("cannot write " + tmp);
         }
-        std::remove(path.c_str());  // std::rename does not replace on Windows
+#if defined(_WIN32)
+        std::remove(path.c_str());  // std::rename does not replace on Windows (not atomic there)
+#endif
         if (std::rename(tmp.c_str(), path.c_str()) != 0) {
             std::remove(tmp.c_str());
             throw std::runtime_error("cannot rename " + tmp + " to " + path);
