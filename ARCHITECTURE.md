@@ -265,7 +265,8 @@ the Python writer's sample for sample.
   the same scenario (`tests/cpp_scenario.py`), and keeps the entity lifecycle.
 - `test_replay.py`: the replay writer and reader, colour round trip, the CLI, and the validator
   against a good replay broken one rule at a time (25 ways).
-- `test_cpp_replay.py`: the C++ replay writer's output validates and equals the Python writer's.
+- `test_cpp_replay.py`: the C++ replay writer's output validates and equals the Python writer's,
+  and a failed `write()` leaves the existing destination in place.
 - `test_cpp_reader.py` (skipped unless `USD_RECORDER_REPLAY_DUMP` is set): the C++ reader prints
   the same canonical JSON as the Python reader on every fixture, and refuses another major
   version, sublayers, a missing state hash, a non-replay and mismatched ids and points.

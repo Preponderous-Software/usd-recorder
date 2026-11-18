@@ -97,6 +97,19 @@ def test_cpp_and_python_replays_are_equal(pair):
     np.testing.assert_allclose(ra.colors, rb.colors, rtol=0, atol=1e-7)
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="the header removes the destination first on Windows")
+def test_cpp_write_keeps_the_destination_when_the_rename_fails(pair, tmp_path):
+    # An empty directory at the destination makes rename() fail (EISDIR) while remove() would
+    # delete it: write() must fail and leave whatever was there, not delete it first.
+    exe = pair[0].parent / "replay_scenario"
+    dest = tmp_path / "run.usda"
+    dest.mkdir()
+    result = subprocess.run([str(exe), str(dest)], capture_output=True)
+    assert result.returncode != 0
+    assert dest.is_dir()
+    assert not list(tmp_path.glob("*.tmp"))
+
+
 def test_cpp_replay_converts_to_usdc(pair, tmp_path):
     cpp, _ = pair
     out = convert(cpp, tmp_path / "run.usdc")
